@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#f5f6f8">
+<title>公民 実力テスト対策</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:#f3f4f6;color:#202124;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP","Yu Gothic",sans-serif}
+button,input{font:inherit}
+.header{position:sticky;top:0;z-index:10;background:white;border-bottom:1px solid #ddd}
+.header-inner{max-width:900px;margin:auto;padding:13px 15px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.title{font-weight:700;font-size:17px}
+.timer{font-weight:800;font-variant-numeric:tabular-nums}
+.main{max-width:900px;margin:auto;padding:14px 12px 100px}
+.card{background:white;border:1px solid #ddd;border-radius:12px;padding:17px;margin-bottom:13px}
+.start{text-align:center;padding:28px 17px}
+h1{font-size:24px;margin:0 0 10px}
+h2{font-size:19px;margin:0 0 14px}
+p{line-height:1.8}
+.info{background:#f6f7f9;padding:13px;border-radius:9px;text-align:left;font-size:14px;line-height:1.9}
+button{border:0;border-radius:9px;padding:12px 16px;font-weight:700;cursor:pointer}
+.primary{background:#1a73e8;color:white}
+.secondary{background:#edf0f4;color:#222}
+.danger{background:#d93025;color:white}
+.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:17px}
+.hidden{display:none!important}
+.progress-wrap{height:7px;background:#e4e6e9;border-radius:9px;overflow:hidden;margin-bottom:17px}
+.progress{height:100%;background:#1a73e8;width:0}
+.category{display:inline-block;background:#edf2fa;color:#315580;border-radius:99px;padding:5px 10px;font-size:12px;margin-bottom:10px}
+.question-number{font-size:13px;color:#666;margin-bottom:8px}
+.question-text{font-size:17px;font-weight:700;line-height:1.8;margin-bottom:17px}
+.short-input{width:100%;padding:14px;border:1px solid #c8ccd1;border-radius:9px;font-size:17px;background:white}
+.short-input:focus{outline:2px solid #1a73e8}
+.nav{position:sticky;bottom:8px;display:flex;gap:8px}
+.nav button{flex:1}
+.question-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+.q-dot{padding:8px 0;background:white;border:1px solid #ccd0d5;font-size:12px}
+.q-dot.answered{background:#e8f1ff;border-color:#1a73e8;color:#135db8}
+.q-dot.current{box-shadow:inset 0 0 0 2px #1a73e8}
+.result-score{text-align:center;font-size:42px;font-weight:800;margin:12px}
+.result-sub{text-align:center;color:#666}
+.answer-row{border-top:1px solid #ddd;padding:14px 0;line-height:1.8}
+.correct{color:#188038;font-weight:700}
+.incorrect{color:#d93025;font-weight:700}
+.answer{background:#f6f7f9;border-radius:8px;padding:10px;margin-top:8px}
+.retry-info{background:#fff8e1;border:1px solid #eed78a;padding:13px;border-radius:9px;line-height:1.8;margin-top:14px}
+@media(max-width:600px){
+.main{padding:10px 9px 95px}
+.card{padding:14px}
+.title{font-size:15px}
+.question-text{font-size:16px}
+.question-grid{grid-template-columns:repeat(7,1fr)}
+}
+</style>
+</head>
+<body>
+<header class="header">
+<div class="header-inner">
+<div class="title">公民 実力テスト対策</div>
+<div id="timer" class="timer">45:00</div>
+</div>
+</header>
+<main class="main">
+<section id="startScreen" class="card start">
+<h1>公民 実力テスト対策</h1>
+<p>中三公民</p>
+<div class="info">
+<b>テストについて</b><br>
+・入力式の問題<br>
+・制限時間45分<br>
+・問題は全てで100問あります<br>
+</div>
+<div class="actions">
+<button class="primary" onclick="startTest()">テストを開始</button>
+</div>
+<div id="retryArea"></div>
+</section>
+<section id="testScreen" class="hidden">
+<div class="card">
+<div class="progress-wrap"><div id="progress" class="progress"></div></div>
+<div id="question"></div>
+</div>
+<div class="card">
+<b>問題一覧</b>
+<div id="questionGrid" class="question-grid" style="margin-top:12px"></div>
+</div>
+<div class="nav">
+<button id="prevBtn" class="secondary" onclick="prevQuestion()">← 前へ</button>
+<button id="nextBtn" class="primary" onclick="nextQuestion()">次へ →</button>
+</div>
+</section>
+<section id="resultScreen" class="hidden">
+<div class="card">
+<h2 style="text-align:center">テスト結果</h2>
+<div id="score" class="result-score"></div>
+<div id="percentage" class="result-sub"></div>
+<div id="resultMessage" style="text-align:center;font-weight:700;margin-top:14px"></div>
+<div id="retryResultArea"></div>
+<div class="actions">
+<button class="primary" onclick="showAnswers()">正答・解説を見る</button>
+<button class="secondary" onclick="location.reload()">最初に戻る</button>
+</div>
+</div>
+<div id="answerScreen" class="card hidden">
+<h2>正答・解説</h2>
+<div id="answers"></div>
+</div>
+</section>
+</main>
+<script>
+const questions=[
+{c:"現代社会",q:"情報を国境を越えて見ることができることを何というか。",a:["インターネット"],e:"オンラインでの検索などまとめてインターネットといいます。"},
+{c:"現代社会",q:"世界の国々が互いに影響し合い、一体化していくことを何というか。",a:["グローバル化"],e:"経済や文化など、さまざまな面で進んでいます。"},
+{c:"現代社会",q:"インターネットなどを通じて情報が世界中に伝わる社会を何というか。",a:["情報社会","高度情報社会"],e:"情報通信技術が生活や社会に大きな影響を与えています。"},
+{c:"現代社会",q:"情報を集めたり発信したりするときに必要な、正しく活用する能力を何というか。",a:["情報リテラシー","情報活用能力"],e:"情報の信頼性を確かめ、適切に利用する力です。"},
+{c:"現代社会",q:"情報を利用する際、他人の個人情報をむやみに公開しないことが大切なのはなぜか。",a:["プライバシーを守るため","個人情報を守るため"],e:"個人の権利や安全を守る必要があります。"},
+{c:"現代社会",q:"国や地域によって異なる生活習慣や考え方を何というか。",a:["文化"],e:"文化には言語、宗教、食生活、習慣などがあります。"},
+{c:"現代社会",q:"異なる文化を認め合い、尊重する考え方を何というか。",a:["多文化共生","文化の尊重"],e:"互いの違いを認めてともに生活する考え方です。"},
+{c:"現代社会",q:"人々が社会生活を送るうえで共有している、習慣やきまりを何というか。",a:["社会規範","規範"],e:"法律や道徳、慣習などが社会規範に含まれます。"},
+{c:"現代社会",q:"人間が生まれながらに持つ、侵すことのできない権利を何というか。",a:["基本的人権","人権"],e:"基本的人権は日本国憲法で保障されています。"},
+{c:"現代社会",q:"人間が社会の中で互いに支え合うことを何というか。",a:["共生"],e:"異なる立場の人々がともに生きることです。"},
+{c:"人権と憲法",q:"日本国憲法の三つの基本原理の一つで、政治のあり方を国民が決める原理は何か。",a:["国民主権"],e:"国の政治の最終的な決定権が国民にあるという原理です。"},
+{c:"人権と憲法",q:"日本国憲法の三つの基本原理の一つで、個人を大切にする原理は何か。",a:["基本的人権の尊重","人権の尊重"],e:"すべての人の基本的人権を尊重します。"},
+{c:"人権と憲法",q:"日本国憲法の三つの基本原理の一つで、戦争を放棄する原理は何か。",a:["平和主義"],e:"戦争の放棄などを定めています。"},
+{c:"人権と憲法",q:"日本国憲法が公布されたのは何年か。",a:["1946","1946年","昭和21年"],e:"1946年11月3日に公布されました。"},
+{c:"人権と憲法",q:"日本国憲法が施行されたのは何年か。",a:["1947","1947年","昭和22年"],e:"1947年5月3日に施行されました。"},
+{c:"人権と憲法",q:"日本国憲法第9条で定められている考え方を何というか。",a:["戦争の放棄","戦争放棄"],e:"戦争の放棄などについて定めています。"},
+{c:"人権と憲法",q:"思想や信仰など、心の中で考える自由を何というか。",a:["精神の自由"],e:"思想・良心の自由、信教の自由などがあります。"},
+{c:"人権と憲法",q:"宗教を信じるかどうかを自分で決める自由を何というか。",a:["信教の自由"],e:"憲法で保障されている精神の自由の一つです。"},
+{c:"人権と憲法",q:"自分の意見を発表したり、表現したりする自由を何というか。",a:["表現の自由"],e:"言論や出版などの自由が含まれます。"},
+{c:"人権と憲法",q:"職業を選ぶ自由や、住む場所を決める自由などを含む権利は何か。",a:["経済活動の自由","経済の自由"],e:"職業選択の自由や居住・移転の自由などがあります。"},
+{c:"人権と憲法",q:"法の下で人々が差別されず平等に扱われる権利を何というか。",a:["平等権"],e:"憲法第14条で法の下の平等が定められています。"},
+{c:"人権と憲法",q:"健康で文化的な最低限度の生活を営む権利を何というか。",a:["生存権"],e:"憲法第25条で保障されています。"},
+{c:"人権と憲法",q:"教育を受ける権利は、どのような権利に分類されるか。",a:["社会権"],e:"社会権には生存権、教育を受ける権利、労働基本権などがあります。"},
+{c:"人権と憲法",q:"働く人が団結し、使用者と交渉する権利を何というか。",a:["団体交渉権"],e:"労働基本権の一つです。"},
+{c:"人権と憲法",q:"労働者が労働組合をつくる権利を何というか。",a:["団結権"],e:"労働者が団結して労働条件の改善を目指します。"},
+{c:"人権と憲法",q:"労働者が要求を実現するためにストライキなどを行う権利を何というか。",a:["団体行動権","争議権"],e:"労働基本権の一つです。"},
+{c:"人権と憲法",q:"国や地方公共団体に意見や要望を伝える権利を何というか。",a:["請願権"],e:"請願権は国や地方公共団体に請願する権利です。"},
+{c:"人権と憲法",q:"国や公共団体の公務員の不法行為によって損害を受けた場合、賠償を求める権利は何か。",a:["国家賠償請求権"],e:"公務員の不法行為による損害について賠償を求められます。"},
+{c:"人権と憲法",q:"裁判を受ける権利など、権利を守るために国に求める権利をまとめて何というか。",a:["請求権"],e:"請願権や裁判を受ける権利などが含まれます。"},
+{c:"人権と憲法",q:"人権を侵害された人々を救済するために設けられた、新しい人権の一つは何か。",a:["プライバシーの権利","プライバシー権"],e:"個人の私生活に関する情報を守る権利です。"},
+{c:"人権と憲法",q:"自分の情報がどのように扱われるかを自分で決める権利を何というか。",a:["自己情報コントロール権"],e:"個人情報を自分で管理するという考え方です。"},
+{c:"人権と憲法",q:"良好な環境の中で生活する権利を何というか。",a:["環境権"],e:"環境を守ることの重要性から主張されてきた権利です。"},
+{c:"人権と憲法",q:"自分の人生の最終段階をどのように生きるかを自分で決める考え方に関係する権利は何か。",a:["自己決定権"],e:"自分に関わることを自分で決定する考え方です。"},
+{c:"人権と憲法",q:"人権が社会全体の利益との関係で調整される考え方を何というか。",a:["公共の福祉"],e:"他人の人権と衝突する場合などに調整が必要です。"},
+{c:"人権と憲法",q:"日本国憲法で、天皇は日本国および日本国民統合の何と定められているか。",a:["象徴"],e:"天皇は日本国と日本国民統合の象徴です。"},
+{c:"政治のしくみ",q:"国の政治のあり方を最終的に決める権力が国民にあることを何というか。",a:["国民主権"],e:"国民主権は日本国憲法の基本原理です。"},
+{c:"政治のしくみ",q:"国の権力を立法・行政・司法の三つに分けるしくみを何というか。",a:["三権分立"],e:"権力の集中を防ぎ、互いに抑制と均衡を図ります。"},
+{c:"政治のしくみ",q:"法律を制定する国の機関はどこか。",a:["国会"],e:"国会は国権の最高機関であり、唯一の立法機関です。"},
+{c:"政治のしくみ",q:"国の行政を担当する機関はどこか。",a:["内閣"],e:"内閣は行政権を担当します。"},
+{c:"政治のしくみ",q:"法律や争いについて判断する機関はどこか。",a:["裁判所"],e:"裁判所は司法権を担当します。"},
+{c:"政治のしくみ",q:"国会が衆議院と参議院の二つから成るしくみを何というか。",a:["二院制","二院制度"],e:"二つの議院で慎重に審議するしくみです。"},
+{c:"政治のしくみ",q:"衆議院と参議院のうち、任期が4年なのはどちらか。",a:["衆議院"],e:"衆議院議員の任期は4年ですが、解散があります。"},
+{c:"政治のしくみ",q:"衆議院と参議院のうち、任期が6年なのはどちらか。",a:["参議院"],e:"参議院議員の任期は6年で、3年ごとに半数を改選します。"},
+{c:"政治のしくみ",q:"国会が内閣総理大臣を指名することを何というか。",a:["首相指名","内閣総理大臣の指名"],e:"国会は内閣総理大臣を指名します。"},
+{c:"政治のしくみ",q:"内閣が国会の信任に基づいて成立し、国会に対して責任を負う制度を何というか。",a:["議院内閣制"],e:"日本では議院内閣制が採用されています。"},
+{c:"政治のしくみ",q:"裁判所が法律などが憲法に違反していないかを判断する権限を何というか。",a:["違憲審査権"],e:"憲法に反する法律などを審査する権限です。"},
+{c:"政治のしくみ",q:"国の政治を国民が選挙などを通じて決める政治を何というか。",a:["民主政治","民主主義"],e:"国民の意思を政治に反映させる政治です。"},
+{c:"政治のしくみ",q:"選挙で、一定の年齢に達した国民に選挙権を認める原則を何というか。",a:["普通選挙"],e:"現在の日本では満18歳以上の国民に選挙権があります。"},
+{c:"政治のしくみ",q:"一人一票を基本とし、投票の価値を平等に扱う原則を何というか。",a:["平等選挙"],e:"投票の価値が平等であることが原則です。"},
+{c:"政治のしくみ",q:"投票した内容を他人に知られないようにする選挙の原則を何というか。",a:["秘密選挙"],e:"投票の秘密を守る原則です。"},
+{c:"政治のしくみ",q:"有権者が代表者を直接選ぶ選挙の原則を何というか。",a:["直接選挙"],e:"有権者が自分で代表者を選びます。"},
+{c:"政治のしくみ",q:"政党が得た票の割合などに応じて議席を配分する選挙制度を何というか。",a:["比例代表制","比例代表"],e:"政党の得票などに応じて議席を配分します。"},
+{c:"政治のしくみ",q:"一つの選挙区から一人の議員を選ぶ制度を何というか。",a:["小選挙区制"],e:"一つの選挙区から一人を選びます。"},
+{c:"政治のしくみ",q:"住民が地域の政治に参加することを何というか。",a:["住民参加"],e:"選挙や住民投票などを通じて参加できます。"},
+{c:"政治のしくみ",q:"地方公共団体が地域のことを自分たちで決める考え方を何というか。",a:["地方自治"],e:"地方自治は民主主義の学校ともいわれます。"},
+{c:"政治のしくみ",q:"地方公共団体の長を何というか。",a:["首長"],e:"都道府県知事や市町村長などが首長です。"},
+{c:"政治のしくみ",q:"都道府県の議会や市町村の議会をまとめて何というか。",a:["地方議会"],e:"条例や予算などを審議します。"},
+{c:"政治のしくみ",q:"地方公共団体が制定する、その地域で適用される決まりを何というか。",a:["条例"],e:"地方議会が制定します。"},
+{c:"政治のしくみ",q:"住民が条例の制定や議会の解散などを求める制度を何というか。",a:["直接請求"],e:"一定数の署名を集めて請求する制度です。"},
+{c:"政治のしくみ",q:"国民が政治に関心を持ち、情報を集めて判断することが大切なのはなぜか。",a:["政治に参加するため","適切な判断をするため"],e:"民主政治を支えるには、国民の関心と判断が重要です。"},
+{c:"経済と生活",q:"商品を買ったりサービスを利用したりする人を何というか。",a:["消費者"],e:"消費者は商品やサービスを消費する人です。"},
+{c:"経済と生活",q:"商品やサービスをつくり出す活動を何というか。",a:["生産"],e:"企業などが商品やサービスを生産します。"},
+{c:"経済と生活",q:"商品を買いたい人と売りたい人が出会う場を何というか。",a:["市場"],e:"市場で需要と供給が結びつきます。"},
+{c:"経済と生活",q:"商品を買いたい量を何というか。",a:["需要"],e:"需要は買い手側の購入したい量です。"},
+{c:"経済と生活",q:"商品を売りたい量を何というか。",a:["供給"],e:"供給は売り手側の販売したい量です。"},
+{c:"経済と生活",q:"需要と供給の関係によって決まる価格を何というか。",a:["市場価格"],e:"市場では需要と供給によって価格が変化します。"},
+{c:"経済と生活",q:"商品を買うときに支払う金額を何というか。",a:["価格","値段"],e:"価格は商品やサービスの価値を金額で表したものです。"},
+{c:"経済と生活",q:"商品やサービスを提供する企業をまとめて何というか。",a:["企業"],e:"企業は生産や販売などの経済活動を行います。"},
+{c:"経済と生活",q:"働く人が労働の対価として受け取るお金を何というか。",a:["賃金","給料","給与"],e:"賃金は労働に対して支払われます。"},
+{c:"経済と生活",q:"家計に入ってくるお金を何というか。",a:["収入"],e:"給与などが家計の収入になります。"},
+{c:"経済と生活",q:"家計から出ていくお金を何というか。",a:["支出"],e:"食費や住居費などが支出になります。"},
+{c:"経済と生活",q:"収入から支出を差し引いて残るお金を何というか。",a:["貯蓄","貯金"],e:"将来に備えてお金を蓄えることです。"},
+{c:"経済と生活",q:"銀行などにお金を預けることを何というか。",a:["預金"],e:"預金は金融機関にお金を預けることです。"},
+{c:"経済と生活",q:"お金を貸し借りしたり、資金を融通したりする活動を何というか。",a:["金融"],e:"金融は経済活動を支える重要なしくみです。"},
+{c:"経済と生活",q:"日本で紙幣を発行する銀行はどこか。",a:["日本銀行"],e:"日本銀行は日本の中央銀行です。"},
+{c:"経済と生活",q:"日本銀行が金融機関との間で国債などを売買してお金の流れを調整する政策を何というか。",a:["金融政策"],e:"金融政策によって物価や景気の安定を目指します。"},
+{c:"経済と生活",q:"国や地方公共団体が公共サービスなどのために集めるお金を何というか。",a:["税金","税"],e:"税金は公共サービスなどの財源になります。"},
+{c:"経済と生活",q:"所得が多い人ほど高い税率が適用されるしくみを何というか。",a:["累進課税","累進課税制度"],e:"所得に応じて税率が高くなる制度です。"},
+{c:"経済と生活",q:"商品を購入したときなどに支払う消費税は、何税に分類されるか。",a:["間接税"],e:"税を負担する人と納める人が異なる税です。"},
+{c:"経済と生活",q:"所得税のように、税を負担する人が直接納める税を何というか。",a:["直接税"],e:"所得税や法人税などが直接税です。"},
+{c:"経済と生活",q:"国の一年間の収入と支出の計画を何というか。",a:["予算"],e:"国会の議決を経て予算が成立します。"},
+{c:"経済と生活",q:"国の収入のうち、税金などによる収入を何というか。",a:["歳入"],e:"歳入には税収や公債金などがあります。"},
+{c:"経済と生活",q:"国の支出を何というか。",a:["歳出"],e:"社会保障、公共事業、教育などに使われます。"},
+{c:"経済と生活",q:"高齢者や障害のある人などを社会全体で支えるしくみを何というか。",a:["社会保障"],e:"年金、医療、介護、福祉などが含まれます。"},
+{c:"経済と生活",q:"病気やけがのときに医療費の負担を軽くする制度を何というか。",a:["医療保険"],e:"社会保険の一つです。"},
+{c:"経済と生活",q:"高齢になったときなどに給付を受ける制度を何というか。",a:["年金","公的年金"],e:"公的年金は老後などの生活を支えます。"},
+{c:"経済と生活",q:"働く意思と能力がある人が仕事を得られない状態を何というか。",a:["失業"],e:"失業への対策も経済政策の課題です。"},
+{c:"経済と生活",q:"国内で一定期間に生産された財やサービスの付加価値の合計を何というか。",a:["国内総生産","GDP"],e:"GDPは国内総生産を表します。"},
+{c:"経済と生活",q:"ある国の経済活動全体の規模や状態を何というか。",a:["景気"],e:"景気は生産や消費、雇用などの動きで判断します。"},
+{c:"経済と生活",q:"消費者が商品やサービスについて正しい情報を得て選ぶことを何というか。",a:["消費者の自立","自立した消費"],e:"消費者は情報を確認して主体的に選択することが大切です。"},
+{c:"経済と生活",q:"商品やサービスについて消費者が相談できる身近な窓口を何というか。",a:["消費生活センター"],e:"消費生活センターは消費者トラブルの相談を受け付けます。"},
+{c:"経済と生活",q:"企業が利益だけでなく、社会への責任も果たす考え方を何というか。",a:["企業の社会的責任","CSR"],e:"環境への配慮や法令遵守なども含まれます。"},
+{c:"現代社会",q:"持続可能な社会を実現するため、環境・社会・経済の調和を図る考え方を何というか。",a:["持続可能な開発"],e:"将来の世代のことも考えて社会を発展させる考え方です。"},
+{c:"現代社会",q:"将来の世代の必要を満たす能力を損なわず、現在の必要も満たす発展を何というか。",a:["持続可能な開発"],e:"持続可能な開発の基本的な考え方です。"},
+{c:"現代社会",q:"国境を越えた環境問題などに、複数の国が協力して取り組むことが必要なのはなぜか。",a:["一国だけでは解決できないから","国際協力が必要だから"],e:"地球規模の課題には国際的な協力が必要です。"},
+{c:"現代社会",q:"国際連合の略称をアルファベットで何というか。",a:["UN"],e:"United Nationsの略です。"},
+{c:"現代社会",q:"国際連合の安全保障理事会が主に担う役割は何か。",a:["国際平和と安全の維持","平和と安全の維持"],e:"国際平和と安全を維持するために活動します。"},
+{c:"現代社会",q:"国際連合の専門機関で、教育・科学・文化の分野で国際協力を進める機関は何か。",a:["ユネスコ","UNESCO"],e:"教育・科学・文化の分野で協力を進めます。"},
+{c:"現代社会",q:"国際連合の専門機関で、世界の健康を守る活動を行う機関は何か。",a:["世界保健機関","WHO"],e:"世界保健機関はWHOと略されます。"},
+{c:"現代社会",q:"世界の貧困や教育、環境などの課題を解決するために国連が掲げた目標を何というか。",a:["SDGs","持続可能な開発目標"],e:"SDGsは持続可能な開発目標です。"}
+];
+let current=0,activeQuestions=[],userAnswers=[],retryMode=false,submitted=false,timeLeft=2700,timerId=null;
+const normalize=s=>String(s??"").trim().toLowerCase().normalize("NFKC").replace(/[ \t\r\n　・･,，。．、\-―‐−]/g,"");
+function correct(q,i){const v=normalize(userAnswers[i]);return !!v&&q.a.some(a=>normalize(a)===v)}
+function esc(s){return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}
+function wrongSaved(){try{return JSON.parse(localStorage.getItem("kouminWrong")||"[]")}catch{return []}}
+function startTest(){activeQuestions=[...questions];retryMode=false;begin()}
+function startRetry(){const ids=wrongSaved();if(!ids.length){alert("再テストする問題はありません");return}activeQuestions=ids.map(i=>questions[i]).filter(Boolean);retryMode=true;begin()}
+function begin(){current=0;userAnswers=Array(activeQuestions.length).fill("");submitted=false;timeLeft=retryMode?Math.min(2700,Math.max(300,activeQuestions.length*45)):2700;document.getElementById("startScreen").classList.add("hidden");document.getElementById("testScreen").classList.remove("hidden");document.getElementById("resultScreen").classList.add("hidden");buildGrid();showQuestion();if(timerId)clearInterval(timerId);timerId=setInterval(()=>{timeLeft--;updateTimer();if(timeLeft<=0){clearInterval(timerId);submitTest(true)}},1000);window.scrollTo(0,0)}
+function updateTimer(){document.getElementById("timer").textContent=String(Math.floor(timeLeft/60)).padStart(2,"0")+":"+String(timeLeft%60).padStart(2,"0");document.getElementById("timer").style.color=timeLeft<=300?"#d93025":"#202124"}
+function buildGrid(){const g=document.getElementById("questionGrid");g.innerHTML="";activeQuestions.forEach((q,i)=>{const b=document.createElement("button");b.className="q-dot";b.textContent=i+1;b.onclick=()=>{current=i;showQuestion()};g.appendChild(b)})}
+function updateGrid(){document.querySelectorAll(".q-dot").forEach((b,i)=>{b.classList.toggle("current",i===current);b.classList.toggle("answered",!!String(userAnswers[i]||"").trim())})}
+function showQuestion(){const q=activeQuestions[current];document.getElementById("progress").style.width=((current+1)/activeQuestions.length*100)+"%";document.getElementById("question").innerHTML=`<div class="category">${esc(q.c)}</div><div class="question-number">問題 ${current+1} / ${activeQuestions.length}</div><div class="question-text">${esc(q.q)}</div><input id="shortInput" class="short-input" autocomplete="off" placeholder="答えを入力" value="${esc(userAnswers[current])}" oninput="userAnswers[current]=this.value;updateGrid()">`;document.getElementById("prevBtn").disabled=current===0;const n=document.getElementById("nextBtn");n.textContent=current===activeQuestions.length-1?"提出する":"次の問題 →";n.className=current===activeQuestions.length-1?"danger":"primary";n.onclick=current===activeQuestions.length-1?()=>submitTest():nextQuestion;updateGrid()}
+function prevQuestion(){if(current>0){current--;showQuestion();window.scrollTo(0,0)}}
+function nextQuestion(){if(current<activeQuestions.length-1){current++;showQuestion();window.scrollTo(0,0)}}
+function submitTest(force=false){if(submitted)return;if(!force){const n=userAnswers.filter(x=>!String(x).trim()).length;if(n&&!confirm("未回答が"+n+"問あります。提出しますか？"))return}submitted=true;if(timerId)clearInterval(timerId);let score=0,wrong=[];activeQuestions.forEach((q,i)=>{if(correct(q,i))score++;else{const ix=questions.indexOf(q);if(ix>=0)wrong.push(ix)}});localStorage.setItem("kouminWrong",JSON.stringify(wrong));document.getElementById("testScreen").classList.add("hidden");document.getElementById("resultScreen").classList.remove("hidden");const p=Math.round(score/activeQuestions.length*100);document.getElementById("score").textContent=score+" / "+activeQuestions.length;document.getElementById("percentage").textContent=p+"%";document.getElementById("resultMessage").textContent=p===100?"満点！すごい！":p>=80?"よくできています！":p>=60?"あと少し！復習しよう！":"間違えた問題を復習して再挑戦しよう！";const area=document.getElementById("retryResultArea");area.innerHTML=wrong.length?`<div class="retry-info">間違えた問題：${wrong.length}問</div><div class="actions"><button class="danger" onclick="startRetry()">間違えた問題を再テスト</button></div>`:`<div class="retry-info">全問正解！間違えた問題はありません。</div>`;window.scrollTo(0,0)}
+function showAnswers(){const box=document.getElementById("answerScreen");box.classList.remove("hidden");let html="";activeQuestions.forEach((q,i)=>{const ok=correct(q,i);html+=`<div class="answer-row"><b>${i+1}. ${esc(q.q)}</b><div class="${ok?"correct":"incorrect"}">${ok?"○ 正解":"× 不正解"}</div><div>あなたの答え：${esc(userAnswers[i]||"未回答")}</div><div class="answer">正解：<b>${esc(q.a[0])}</b><br><span style="color:#666;font-size:14px">${esc(q.e)}</span></div></div>`});document.getElementById("answers").innerHTML=html;box.scrollIntoView({behavior:"smooth"})}
+function renderRetry(){const ids=wrongSaved();if(!ids.length)return;document.getElementById("retryArea").innerHTML=`<div class="retry-info">前回の間違い：${ids.length}問</div><div class="actions"><button class="danger" onclick="startRetry()">間違えた問題を再テスト</button></div>`}
+renderRetry();
+</script>
+</body>
+</html>
